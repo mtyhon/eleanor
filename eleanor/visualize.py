@@ -210,6 +210,15 @@ class Visualize(object):
                 pg = lc.normalize().to_periodogram()
                 x = pg.frequency.value
                 y = pg.power.value
+            elif data_type.lower() == 'psd':
+                ff = corr_flux[q]/np.nanmedian(corr_flux[q])
+                tt = time[q]
+                lc = lk.LightCurve(time=tt, flux=ff)
+                lc = lc.flatten()
+                lc.flux *= 1e6
+                pg = lc.to_periodogram(normalization='psd')
+                x = pg.frequency.value
+                y = pg.power.value
 
             elif data_type.lower() == 'raw':
                 y = flux[q]/np.nanmedian(flux[q])
@@ -228,7 +237,10 @@ class Visualize(object):
                 rgb = c.cmap(c.norm(self.flux[100,i,j]))
                 color = matplotlib.colors.rgb2hex(rgb)
 
-            ax.plot(x, y, c=color)
+            if data_type.lower() == 'corrected':
+              ax.scatter(x, y, c=color, s=1.)
+            else:
+              ax.plot(x, y, c=color)
 
             if color_by_aperture and aperture[i,j] > 0:
                 for iax in ['top', 'bottom', 'left', 'right']:
@@ -253,9 +265,13 @@ class Visualize(object):
             if data_type.lower() == 'amplitude':
                 ax.set_yscale('log')
                 ax.set_xscale('log')
-                ax.set_ylim(y.min(), y.max())
-                ax.set_xlim(np.min(x),
-                            np.max(x))
+            elif data_type.lower() == 'psd':
+                ax.set_yscale('log')
+                ax.set_xscale('log')
+                #print(np.max(x))
+                # ax.set_ylim(y.min(), y.max())
+                # ax.set_xlim(np.min(x),
+                #             np.max(x))
 
             ax.set_xticks([])
             ax.set_yticks([])
@@ -387,7 +403,8 @@ class Visualize(object):
         plt.scatter(coords[:, 0]+tpf.column, coords[:, 1]+tpf.row, c='firebrick', alpha=0.5, edgecolors='r', s=sizes)
         plt.scatter(coords[:, 0]+tpf.column, coords[:, 1]+tpf.row, c='None', edgecolors='r', s=sizes)
         plt.xlim([tpf.column-0.5, tpf.column+tpf.shape[1]-0.5])
-        plt.ylim([tpf.row-0.5, tpf.row+tpf.shape[2]-0.5])
+        # plt.ylim([tpf.row-0.5, tpf.row+tpf.shape[2]-0.5])
+        plt.ylim([tpf.row+tpf.shape[2]-0.5, tpf.row-0.5])
 
         return fig
 
